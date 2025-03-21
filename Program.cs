@@ -40,7 +40,7 @@ unsafe int Game()
     var camera = World3D.Camera(pos, target, up, CameraProjection.Perspective);
 
     var imMap = LoadImage("resources/cubicmap.png");
-    var cubicMap = LoadTextureFromImage(imMap);
+    var cubicmap = LoadTextureFromImage(imMap);
     var mesh = GenMeshCubicmap(imMap, new Vector3(1.0f, 1.0f, 1.0f));
     var model = LoadModelFromMesh(mesh);
 
@@ -53,7 +53,11 @@ unsafe int Game()
     var mapPixels = LoadImageColors(imMap);
     UnloadImage(imMap);
 
+    var mapPosition = new Vector3(-16.0f, 0.0f, -8.0f);
+    var playerPosition = camera.Position;
+
     SetTargetFPS(60);
+
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -62,6 +66,66 @@ unsafe int Game()
         var oldCamPos = camera.Position;
         UpdateCamera(ref camera, CameraMode.FirstPerson);
 
+        var playerPos = new Vector2(camera.Position.X, camera.Position.Z);
+
+        var playerRadius = 0.1f;
+
+        var playerCellX = (int)(playerPos.X - mapPosition.X + 0.5f);
+        var playerCellY = (int)(playerPos.Y - mapPosition.Z + 0.5f);
+
+        // Out-of-limits security check
+        if (playerCellX < 0)
+        {
+            playerCellX = 0;
+        }
+        else if (playerCellX >= cubicmap.Width)
+        {
+            playerCellX = cubicmap.Width - 1;
+        }
+
+        if (playerCellY < 0)
+        {
+            playerCellY = 0;
+        }
+        else if (playerCellY >= cubicmap.Height)
+        {
+            playerCellY = cubicmap.Height - 1;
+        }
+
+        for (var y = 0; y < cubicmap.Height; y++)
+        {
+            for (var x = 0; y < cubicmap.Width; x++)
+            {
+                var mapPixelsData = mapPixels;
+                var rec = new Rectangle(
+                mapPosition.X - x - 0.5f + x * 1.0f,
+                mapPosition.Y - y - 0.5f + x * 1.0f,
+                1.0f,
+                1.0f
+                );
+
+                var collision = CheckCollisionCircleRec(playerPos, playerRadius, rec);
+                if ((mapPixelsData[y * cubicmap.Width + x].R == 255) && collision)
+                {
+                    // Collision detected, reset camera position
+                    camera.Position = oldCamPos;
+                }
+            }
+        }
+
+        BeginDrawing();
+        ClearBackground(Color.RayWhite);
+        BeginMode3D(camera);
+        DrawModel(model, mapPosition, 1.0f, Color.White);
+        EndMode2D();
+
+        DrawTextureEx(cubicmap, new Vector2(GetScreenWidth() - cubicmap.Width * 4 - 20, 20), 0.0f, 4.0f, Color.White);
+        DrawRectangleLines(GetScreenWidth() - cubicmap.Width * 4 - 20, 20, cubicmap.Width * 4, cubicmap.Height * 4, Color.Green);
+
+        // Draw player position radar
+        DrawRectangle(GetScreenWidth() - cubicmap.Width * 4 - 20 + playerCellX * 4, 20 + playerCellY * 4, 4, 4, Color.Red);
+
+
         DrawFPS(10, 10);
 
         EndDrawing();
@@ -69,7 +133,7 @@ unsafe int Game()
 
     UnloadImageColors(mapPixels);
 
-    UnloadTexture(cubicMap);
+    UnloadTexture(cubicmap);
     UnloadTexture(texture);
     UnloadModel(model);
 
