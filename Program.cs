@@ -1,73 +1,62 @@
 // I hereby waive this project under the public domain - see UNLICENSE for details.
 
-// Initialization
-//--------------------------------------------------------------------------------------
-const int screenWidth = 600;
-const int screenHeight = 450;
-Raylib.InitWindow(screenWidth, screenHeight, "PlayBark");
-
-// Based on WavingCube example:
-// https://github.com/raylib-cs/raylib-cs/blob/master/Examples/Models/WavingCubes.cs
-
-// Initialize the camera
-var camera = new Camera3D();
-camera.Position = new Vector3(30.0f, 20.0f, 30.0f);
-camera.Target = new Vector3(0.0f, 0.0f, 0.0f);
-camera.Up = new Vector3(0.0f, 1.0f, 0.0f);
-camera.FovY = 70.0f;
-camera.Projection = CameraProjection.Perspective;
-
-const int numBlocks = 15;
-
-Raylib.SetTargetFPS(60);
-
-// Main game loop
-while (!Raylib.WindowShouldClose())
+/// <summary>
+/// Retrieves configuration settings from a TOML file if it exists; otherwise, returns a default configuration.
+/// </summary>
+/// <param name="file">The name of the configuration file (defaults to "config.toml").</param>
+/// <returns>A Config object populated with values from the file, or a default Config instance if the file is not found.</returns>
+static Config ReadConfig(string file)
 {
-    var time = Raylib.GetTime();
-    var scale = (2.0f + (float)Math.Sin(time)) * 0.7f;
+    var cfgPath = Path.Combine(Tracer.AppDirectory, file);
 
-    var cameraTime = time * 0.3;
-
-    camera.Position.X = (float)Math.Cos(cameraTime) * 40.0f;
-    camera.Position.Z = (float)Math.Cos(cameraTime) * 40.0f;
-
-    Raylib.BeginDrawing();
-    Raylib.ClearBackground(Color.RayWhite);
-
-    Raylib.BeginMode3D(camera);
-
-    Raylib.DrawGrid(10, 5.0f);
-
-    for (int x = 0; x < numBlocks; x++)
+    if (!File.Exists(cfgPath))
     {
-        for (int y = 0; y < numBlocks; y++)
+        Tracer.WriteLine("Config file not found. Switching to defaults.");
+        var config = new Config
         {
-            for (int z = 0; z < numBlocks; z++)
-            {
-                var blockScale = (x + y + z) / 30.0f;
-                var scatter = (float)Math.Sin(blockScale * 20.0f + (float)(time * 4.0f));
+            Width = 600,
+            Height = 450
+        };
 
-                var cubePos = new Vector3(
-                       (float)(x - numBlocks / 2) * (scale * 3.0f) + scatter,
-                        (float)(x - numBlocks / 2) * (scale * 2.0f) + scatter,
-                        (float)(x - numBlocks / 2) * (scale * 3.0f) + scatter
-                );
-
-                var cubeColor = Raylib.ColorFromHSV((float)(((x + y + z) * 18) % 360), 0.75f, 0.9f);
-
-                var cubeSize = (2.4f - scale) * blockScale;
-
-                Raylib.DrawCube(cubePos, cubeSize, cubeSize, cubeSize, cubeColor);
-            }
-        }
+        return config;
     }
 
-    Raylib.EndMode3D();
+    Tracer.WriteLine($"Discovered config file: {cfgPath}");
+    var toml = File.ReadAllText(cfgPath);
+    var model = Toml.ToModel<Config>(toml);
 
-    Raylib.DrawFPS(10, 10);
-
-    Raylib.EndDrawing();
+    return model;
 }
 
-Raylib.CloseWindow();
+void Init(int screenWidth, int screenHeight, int fps)
+{
+    var pos = new Vector3(0.2f, 0.4f, 0.2f);
+    var target = new Vector3(0.0f, 0.0f, 0.0f);
+    var up = new Vector3(0.0f, 1.0f, 0.0f);
+
+    InitWindow(screenWidth, screenHeight, $"PlayBark");
+    World.Camera(pos, target, up, CameraProjection.Perspective);
+    SetTargetFPS(fps);
+}
+
+int GameLoop()
+{
+    var config = ReadConfig("config.toml");
+    Init(config.Width, config.Height, 60);
+
+    while (!WindowShouldClose())
+    {
+        BeginDrawing();
+        ClearBackground(Color.White);
+
+        DrawFPS(10, 10);
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+
+    return 0;
+}
+
+GameLoop();
