@@ -35,7 +35,7 @@ void Init(int screenWidth, int screenHeight, int fps)
     var up = new Vector3(0.0f, 1.0f, 0.0f);
 
     InitWindow(screenWidth, screenHeight, $"PlayBark");
-    World.Camera(pos, target, up, CameraProjection.Perspective);
+    World3D.InitCamera(pos, target, up, CameraProjection.Perspective);
     SetTargetFPS(fps);
 }
 

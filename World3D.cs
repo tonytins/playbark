@@ -1,9 +1,9 @@
 // I hereby waive this project under the public domain - see UNLICENSE for details.
 namespace PlayBark;
 
-internal static class World
+internal static class World3D
 {
-    public static Camera3D Camera(Vector3 pos, Vector3 target, Vector3 up, CameraProjection projection)
+    public static Camera3D InitCamera(Vector3 pos, Vector3 target, Vector3 up, CameraProjection projection)
     {
         Camera3D camera = new();
         camera.Position = pos;
