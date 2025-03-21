@@ -32,7 +32,7 @@ static Config Settings(string file)
 unsafe int Game()
 {
     var config = Settings("config.toml");
-    InitWindow(config.Width, config.Height, $"PlayBark");
+    InitWindow(config.Width, config.Height, "PlayBark");
 
     var pos = new Vector3(0.2f, 0.4f, 0.2f);
     var target = new Vector3(0.0f, 0.0f, 0.0f);
@@ -41,13 +41,12 @@ unsafe int Game()
 
     var imMap = LoadImage("resources/cubicmap.png");
     var cubicmap = LoadTextureFromImage(imMap);
-    var mesh = GenMeshCubicmap(imMap, new Vector3(1.0f, 1.0f, 1.0f));
-    var model = LoadModelFromMesh(mesh);
+    var model = World3D.CubicMap(imMap);
 
     var texture = LoadTexture("resources/cubicmap_atlas.png");
 
     // Set map diffuse texture
-    SetMaterialTexture(ref model, 0, MaterialMapIndex.Albedo, ref texture);
+    Raylib.SetMaterialTexture(ref model, 0, MaterialMapIndex.Albedo, ref texture);
 
     // Get image map data to be used for collission
     var mapPixels = LoadImageColors(imMap);
@@ -60,9 +59,7 @@ unsafe int Game()
 
     while (!WindowShouldClose())
     {
-        BeginDrawing();
-        ClearBackground(Color.White);
-
+        // Update
         var oldCamPos = camera.Position;
         UpdateCamera(ref camera, CameraMode.FirstPerson);
 
@@ -117,7 +114,7 @@ unsafe int Game()
         ClearBackground(Color.RayWhite);
         BeginMode3D(camera);
         DrawModel(model, mapPosition, 1.0f, Color.White);
-        EndMode2D();
+        EndMode3D();
 
         DrawTextureEx(cubicmap, new Vector2(GetScreenWidth() - cubicmap.Width * 4 - 20, 20), 0.0f, 4.0f, Color.White);
         DrawRectangleLines(GetScreenWidth() - cubicmap.Width * 4 - 20, 20, cubicmap.Width * 4, cubicmap.Height * 4, Color.Green);
